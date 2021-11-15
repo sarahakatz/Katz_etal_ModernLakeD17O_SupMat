@@ -1,0 +1,349 @@
+### Title: A triple oxygen isotope study of modern waters and lake carbonates in the Lake Junín Region, central Peru
+### Supplementary script: lake.bal.supplement.R
+### Author: Sarah Katz
+### Contact: Sarah Katz (skatzees@umich.edu) or Naomi Levin (nelevin@umich.edu) with questions or comments
+
+#########################################################
+##########  0) Description of script  ###################
+#########################################################
+
+###     This script models the isotopic composition (d18O, d17O, d2H, D'17O, d-excess) of evaporated lake waters
+###     based on steady state mass balance equations. Here, we use both the traditional mass balance equations of 
+###     Criss (1999) for flow-through lakes experiencing evaporation (Eq. 1), and equations that account for the
+###     influence of evaporated waters on the isotopic composition of atmospheric moisture (Eq. 2; e.g., Benson 
+###     and White, 1994; Passey and Ji, 2019).
+###
+###     This script models the isotopic composition of lake waters using a Monte Carlo approach, in which the user 
+###     prescribes a numerical range for each model parameter. For each parameter, values are randomly generated and used 
+###     to solve the water budget equations. This work is based upon the Monte Carlo approach used by Passey
+###     and Ji (2019). Our work expands upon that work by including code to calculate lake water isotopes using
+###     either of the balance equations and includes calculations for d2H and d-excess. Though  modeled d-excess is not
+###     discussed in this paper, our code may be useful for studies which combine lake water d-excess and D'17O data.
+###
+###     This script also includes the code to generate Figures 6 and 7.
+
+
+###     Contents:
+
+###     0) Description of script
+###     1) Required packages & datasets from this study and Passey & Ji (2019)
+###     2) Lake budget steady state equations
+###     3) Constants
+###     4) User defined model parameters and random selection of parameter values
+###     5) Steady state lake water calculations - Eq. 1
+###     6) Steady state lake water calculations - Eq. 2
+###     7) Plots of modeled lake waters and lambda_lake (used to create Fig. 6)
+###     8) Calculate modeled lambda_lake - D'17Ow relationship
+###     9) 3D plots (Used to create Fig. 7)
+
+
+#########################################################
+#############  1) Required Packages  ####################
+#########################################################
+
+## Required packages
+#install.packages("ggplot2")
+#install.packages("ggpubr")
+#install.packages("rgl")
+#install.packages("viridisLite")
+
+library(ggplot2)
+library(ggpubr)
+library(rgl)
+library(viridisLite)
+
+plot.path <- "~/Desktop/"             ## user may update plot path
+
+## Sample data from this study and from Passey and Ji (2019). (Included here so that the user does not have to read in data files for plots 1 and 3)
+## Creates a dataframe of water data reported in the text from the Junin and Yanacocha catchments (excludes data from the isolated pool)
+    Katz_samples_waters = c("PE19-CAR-S028", "PE19-JUN-R063", "PE16-JUN-L016", "PE19-JUN-L090", "PE19-JUN-L159", "PE16-JUN-S038", "PE16-JUN-S048", "PE16-JUN-S053", "PE16-JUN-S019", "PE19-YAN-L141", "PE19-YAN-L155", "PE19-YAN-S140", "PE19-MEH-L116", "PE19-PUM-L018", "PE19-PUM-S016")
+    Katz_D17O_pm = c(24, 14, -6, 25, 16, 19, 19, 9, 25, 25, 10, 1, 27, 36, 23)                                                                              ## Table 2
+    Katz_dp18O = c(-14.903, -10.346, -4.159, -12.326, -11.077, -14.277, -12.896, -12.681, -14.146, -11.780, -9.673, -8.951, -13.289, -13.067, -14.435)      ## Table 2
+    Katz_samples_carbfw = c("PE19-PUM-C007", "PE19-PUM-C008", "PE19-PUM-C021", "PE19-PUM-C133A", "PE19-MEH-C117", "PE19-MEH-C122", "PE19-YAN-C156", "PE19-YAN-C158", "PE19-YAN-C145A", "PE19-JUN-C163", "PE19-JUN-C094")
+    Katz_D17O_pm_carbfw = c(25, 20, 15, 18, 11, 17, 1, 2, 7, 9, 28)                                                                                         ## Table 9
+    Katz_dp18O_carbfw = c(-13.963, -13.288, -13.931, -12.177, -13.663, -12.817, -9.854, -12.828, -12.811, -12.506, -15.103)                                 ## Table 9
+    
+    # Katz_samples_carb = c("PE19-JUN-C163", "PE19-MEH-C117", "PE19-PUM-C007", "PE19-YAN-C156", "PE19-YAN-C158", "PE19-JUN-C094", "PE19-PUM-C008", "PE19-MEH-C122", "PE19-YAN-C145A", "PE19-PUM-C021", "PE19-PUM-C133A")
+    # Katz_D17O_pm_carb = c(14, 20, 34, 10, 10, 41, 30, 25, 15, 24, 26)
+    # Katz_dp18O_carb = c(-12.392, -13.661, -13.965, -9.837, -12.835, -15.743, -13.510, -12.840, -12.844, -13.970, -12.214)
+## Creates a dataframe of lake water data reported in Passey and Ji (2019)
+    PJ19_samples_waters = c("2014PL001-W1", "2014PL002-W1", "2014PL004-W1", "2014MonoL-W1", "2014MonoL-002W1", "2014BL-005W", "2014BL-008W", "2014BL-009W", "2014GSL-001W2", "2014GSL-002W", "2014GSL-003W", "2014GSL-JRW")
+    PJ19_D17O_pm = c(-34,-39,-38,-31,-26,8,7,19,-28,-12,-17,-20)
+    PJ19_dp18O = c(-0.895,-0.429,-0.343,-3.851,-5.532,-9.968,-9.948,-9.345,-4.206,-6.325,-4.347,-4.545)
+    PJ19_samples_carbfw = c("2014PL-001C", "2014PL-002C", "2014MonoL-001C", "2014BL-005C", "2014BL-005Shell", "2014BL-008C", "2014GSL-001C", "2014GSL-JRC")
+    PJ19_D17O_pm_carbfw = c(-26, -32, -91, -31, -23, -14, -28, -29)
+    PJ19_dp18O_carbfw = c(-1.2, -0.8, 5.9, -5.8, -4.2, -5.5, -3.0, -3.3)
+
+
+#########################################################
+##############  2) EQUATIONS  ###########################
+#########################################################
+
+## Eq. 1  
+##  Rw = (adiff*(1-h)*Ri + aeq*h*Xe*Rv)/(Xe+adiff*(1-h)*(1-Xe))
+##  Throughflow lake with evaporation (Criss, 1999, Eq 4.46c)
+
+## Eq. 2
+## Rw = (aeq*Ri*(adiff(a-h) + h*(1-F)) + aeq*h*Xe*Rv*F) / (Xe + aeq*(1-Xe)*(adiff*(1-h) + h(1-F))
+## Throughflow lake where evaporated water contributes to atmospheric vapor (Passey and Ji, 2019, Eq. 6)
+
+
+#########################################################
+##############  3) CONSTANTS  ###########################
+#########################################################
+
+R18smow = 0.0020052   ## Baertschi, 1976; IAEA Reference sheet
+R17smow = 0.0003799   ## Li et al., 1988; IAEA Reference sheet
+R2smow = 0.0001558    ## Hagemann et al., 1970; IAEA Reference sheet
+
+theta.eq = 0.529      ## Barkan and Luz, 2005
+theta.diff = 0.5185   ## Barkan and Luz, 2007
+theta.ref = 0.528
+
+gmwl= c(8,10)         ## Craig, 1961
+
+diffratio18 = 1/0.9723  ## Merlivat, 1978
+                ## adiff18 = 1.028489
+diffratio2H = 1/0.9755  ## Merlivat, 1978
+                ## adiff18 = 1.025115
+
+
+#########################################################
+##############  4) USER DEFINED  ########################
+#########################################################
+
+z = 1000        ## number of model simulations
+
+temp = 14       ## Temperature in degrees Celsius
+
+
+########### RANDOMLY  DISTRIBUTED VARIABLES #############
+                 ### Min & Max values ###
+
+## Proportion of turbulent fractionation. May range from 0-1
+TFmin = 0.2     ## MIN 
+TFmax = 0.7     ## MAX
+
+## Proportion of Evaporative losses to Inputs. May range from 0 (no evap loss) to 1 (all loss from evap)
+Xemin = 0.01    ## MIN
+Xemax = 1.0     ## MAX
+
+## Relative humidity normalized to lake surface temperature. May range from 0 (dry atmosphere) to 1 (saturated atmosphere)
+hmin = 0.3      ## MIN
+hmax = 0.9      ## MAX
+
+## Fraction of local vapor derived from non-lake water sources. May range from 0 (the lake provides 100% of local moisture) to 1 (the lake provides 0% of local moisture)
+Fmin = 0.7      ## MIN
+Fmax = 1        ## MAX
+          
+
+########### Random selection of parameter values between provided min-max values #############
+
+TF = runif(z, min = TFmin, max = TFmax)
+Xe = runif(z, min = Xemin, max = Xemax)
+h = runif(z, min = hmin, max = hmax)
+Fr = runif(z, min = Fmin, max = Fmax)
+
+
+##################  User-assigned values for input water  #######################
+## Based on amount-weighted mean annual precipitation at Junin, Peru (Katz et al., Section 5.2.1.1). All in units of per mil.
+D17Oi = 0.031
+dp18Oi = -14.1
+dp17Oi = D17Oi + (dp18Oi * theta.ref)  
+d2Hi = -100
+dxsi = d2Hi-(8*dp18Oi)
+
+################## Calculate R values for input waters  ##################
+
+Ri18 = exp(dp18Oi/1000)*R18smow
+Ri17 = exp(dp17Oi/1000)*R17smow
+Ri2H = ((d2Hi/1000)+1)*R2smow
+
+################## Isotopic ratio of water vapor in equilibrium with lake water  ##################
+
+d18Ov = runif(z, min = -17, max = -13)            ## random selection between min an max values for atmospheric vapor d18O value
+D17Ov = runif(z, min = 0.015, max = 0.040)        ## random selection between min an max values for atmospheric vapor D'17O value
+dxsv = runif(z, min = 0, max = 30)                ## random selection between min an max values for atmospheric vapor d-excess value
+
+dp18Ov = log(d18Ov/1000+1)*1000                   ## convert vapor d18O to delta prime
+dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d'17O 
+d2Hv = dxsv + 8*d18Ov                             ## calculate vapor d2H
+
+## Temperature dependent equilibrium fractionation between vapor and liquid water
+aeq18 = exp((1137/((temp + 273.15)^2)) - (0.4146/(temp+273.15)) - 0.0020667)    ## Majoube 1971
+aeq17 = exp(theta.eq * log(aeq18))                                              
+aeq2H = exp((24844/((temp + 273.15)^2)) - (76.248/(temp+273.15)) + 0.052612)    ## Majoube 1971
+
+## Calculate R values for vapor
+Rv18 = (exp(dp18Ov/1000)* R18smow)/aeq18
+Rv17 = (exp(dp17Ov/1000)*R17smow)/aeq17
+Rv2H = R2smow*((d2Hv/1000)+1)
+
+## Diffusion vs. pure turbulence (i.e. no fractionation). When TF = 1, all diffusive fractionation; when TF = 0, no diffusive fractionation (all turbulent)
+adiff18 = TF*diffratio18 + (1-TF)
+adiff17 = exp(theta.diff*log(adiff18))
+adiff2H = TF*diffratio2H + (1-TF)  
+
+
+#############################################################################################
+#######################  5) LAKE WATER CALCULATIONS - EQ. 1  ################################
+##  Assumes evaporated water DOES NOT influence isotopic composition of atmospheric vapor ###
+#############################################################################################
+
+## Calculate R values for lake waters
+Rw18.eq1 = ((adiff18*(1-h)*Ri18) + (aeq18*h*Xe*Rv18))/(Xe + (adiff18*(1-h)*(1-Xe)))
+Rw17.eq1 = ((adiff17*(1-h)*Ri17) + (aeq17*h*Xe*Rv17))/(Xe + (adiff17*(1-h)*(1-Xe)))
+Rw2H.eq1 = ((adiff2H*(1-h)*Ri2H) + (aeq2H*h*Xe*Rv2H))/(Xe + (adiff2H*(1-h)*(1-Xe)))
+
+## Calculate delta (d), delta prime (dp), D'17O (Dp), d-excess (dsx) values for lake waters in units of per mil and D'17O (Dp) in units of per meg.
+dp18Ow.eq1 = (log(Rw18.eq1/R18smow))*1000
+d18Ow.eq1 = ((Rw18.eq1/R18smow)-1)*1000
+dp17Ow.eq1 = (log(Rw17.eq1/R17smow))*1000
+d2Hw.eq1 = ((Rw2H.eq1/R2smow)-1)*1000
+
+Dp17Ow.eq1 = (dp17Ow.eq1 - (theta.ref*dp18Ow.eq1))*1000
+dxsw.eq1 = d2Hw.eq1 - gmwl[1]*d18Ow.eq1
+
+lam.lake.eq1 = (dp17Ow.eq1-dp17Oi)/(dp18Ow.eq1-dp18Oi)
+
+#############################################################################################
+#######################  6) LAKE WATER CALCULATIONS - EQ. 2  ################################
+#####  Assumes evaporated water DO influence isotopic composition of atmospheric vapor ######
+#############################################################################################
+
+## Calculate R values for lake waters
+Rw18.eq2 = ((aeq18*Ri18*(adiff18*(1-h)+h*(1-Fr)))+(aeq18*h*Xe*Rv18*Fr))/
+  (Xe+aeq18*(1-Xe)*(adiff18*(1-h)+h*(1-Fr)))
+  
+Rw17.eq2 = ((aeq17*Ri17*(adiff17*(1-h)+h*(1-Fr)))+(aeq17*h*Xe*Rv17*Fr))/
+  (Xe+aeq17*(1-Xe)*(adiff17*(1-h)+h*(1-Fr)))
+
+Rw2H.eq2 = ((aeq2H*Ri2H*(adiff2H*(1-h)+h*(1-Fr)))+(aeq2H*h*Xe*Rv2H*Fr))/
+  (Xe+aeq2H*(1-Xe)*(adiff2H*(1-h)+h*(1-Fr)))
+
+## Calculate delta (d), delta prime (dp), d-excess (dsx) values for lake waters in units of per mil and D'17O (Dp) in units of per meg.
+dp18Ow.eq2 = (log(Rw18.eq2/R18smow))*1000
+d18Ow.eq2 = ((Rw18.eq2/R18smow)-1)*1000
+dp17Ow.eq2 = (log(Rw17.eq2/R17smow))*1000
+d2Hw.eq2 = ((Rw2H.eq2/R2smow)-1)*1000
+
+Dp17Ow.eq2 = (dp17Ow.eq2 - (theta.ref*dp18Ow.eq2))*1000
+dxsw.eq2 = d2Hw.eq2 - gmwl[1]*d18Ow.eq2
+
+## Calculate lambda lake values
+lam.lake.eq2 = (dp17Ow.eq2-dp17Oi)/(dp18Ow.eq2-dp18Oi)
+
+#########################################################
+#####################  7) PLOTS  ########################
+#########################################################
+## Requires packages 'ggplot2' and 'ggpubr'
+
+##  Assumes evaporated water does not influence isotopic composition of atmospheric vapor (Eq. 1) ##
+##  p1 = D'17O vs d'18O of modeled lake waters using EQ. 1
+p1 <- ggplot()+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
+  geom_point(aes(x=dp18Ow.eq1, y = Dp17Ow.eq1), size =2, shape = 23, color="grey")+  
+  geom_point(aes(x=Katz_dp18O, y=Katz_D17O_pm), size =2, fill="skyblue3", shape =21, stroke = 0.5)+
+  geom_point(aes(x=Katz_dp18O_carbfw, y=Katz_D17O_pm_carbfw), size =2, fill="skyblue1", shape =22, stroke = 0.5)+
+  geom_point(aes(x=PJ19_dp18O, y=PJ19_D17O_pm), size =2, fill="gold", shape =21, stroke = 0.5)+
+  geom_point(aes(x=PJ19_dp18O_carbfw, y=PJ19_D17O_pm_carbfw), size =2, fill="gold3", shape =22, stroke = 0.5)+
+  geom_point(aes(y=D17Oi*1000, x=dp18Oi), size =2, shape = 23, color = "black", stroke = 0.75, fill="white")+ 
+  scale_x_continuous(limits = c(-20, 20), expand = c(0, 0))+
+  scale_y_continuous(limits = c(-150, 50),expand = c(0, 0), labels = scales::number_format(accuracy = 1))+
+  theme(text = element_text(size=16))+
+  labs(x=expression(delta*"\u02B9"^"18"*"O (\u2030)"), y=expression(Delta*"\u02B9"^"17"*"O (per meg; "*lambda[ref]*" = 0.528)"))
+p1
+
+##  p2 = d-excess vs d'18O of modeled lake waters using EQ. 1
+p2 <- ggplot()+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
+  geom_point(aes(x=d18Ow.eq1, y = dxsw.eq1), size =1, shape = 24, color="grey")+  
+  geom_point(aes(y=dxsi, x=dp18Oi), size =2, shape = 24, color = "black", stroke = 1, fill="white")+ 
+  scale_x_continuous(limits = c(-20, 10), expand = c(0, 0))+
+  scale_y_continuous(limits = c(-100, 75),expand = c(0, 0), labels = scales::number_format(accuracy = .1))+
+  theme(text = element_text(size=16))+
+  labs(x=expression(delta*""^"18"*"O (\u2030)"), y=expression("d-excess (\u2030)"))
+p2
+
+
+#####  Assumes evaporated water do influence influence isotopic composition of atmopspheric vapor (Eq. 2) #####
+##  p3 = D'17O vs d'18O of modeled lake waters using EQ. 2
+## ** Creates plots for top row of Figure 6
+p3 <- ggplot()+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
+  geom_point(aes(x=dp18Ow.eq2, y = Dp17Ow.eq2), size =1.5, shape = 23, color="grey")+  
+  geom_point(aes(x=Katz_dp18O, y=Katz_D17O_pm), size =2, fill="skyblue3", shape =21, stroke = 0.5)+
+  geom_point(aes(x=Katz_dp18O_carbfw, y=Katz_D17O_pm_carbfw), size =2, fill="skyblue1", shape =22, stroke = 0.5)+
+  geom_point(aes(x=PJ19_dp18O, y=PJ19_D17O_pm), size =2, fill="gold", shape =21, stroke = 0.5)+
+  geom_point(aes(x=PJ19_dp18O_carbfw, y=PJ19_D17O_pm_carbfw), size =2, fill="gold3", shape =22, stroke = 0.5)+
+  geom_point(aes(y=D17Oi*1000, x=dp18Oi), size =2, shape = 23, color = "black", stroke = 0.75, fill="white")+ 
+  scale_x_continuous(limits = c(-20, 20), expand = c(0, 0))+
+  scale_y_continuous(limits = c(-150, 50),expand = c(0, 0), labels = scales::number_format(accuracy = 1))+
+  theme(text = element_text(size=16))+
+  labs(x=expression(delta*"\u02B9"^"18"*"O (\u2030)"), y=expression(Delta*"\u02B9"^"17"*"O (per meg; "*lambda[ref]*" = 0.528)"))
+p3
+
+
+##  p4 = d-excess vs d'18O of modeled lake waters using EQ. 2
+p4 <- ggplot()+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
+  geom_point(aes(x=d18Ow.eq2, y = dxsw.eq2), size =2, shape = 24, color="grey")+  
+  geom_point(aes(y=dxsi, x=dp18Oi), size =2, shape = 24, color = "black", stroke = 1, fill="white")+ 
+  scale_x_continuous(limits = c(-20, 10), expand = c(0, 0))+
+  scale_y_continuous(limits = c(-100, 75),expand = c(0, 0), labels = scales::number_format(accuracy = .1))+
+  theme(text = element_text(size=16))+
+  labs(x=expression(delta*""^"18"*"O (\u2030)"), y=expression("d-excess (\u2030)"))
+p4
+
+##  p5 = modeled lake water D'17O (Eq 2) vs lambda_lake
+## ** Creates plots for bottom row of Figure 6
+p5 <- ggplot()+
+  theme_bw()+
+  theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
+  geom_point(aes(y=lam.lake.eq2, x = Dp17Ow.eq2), size =2, shape = 23, color="grey")+
+  geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2),  formula = y ~ poly(x,3), fill="blue", color="black", linetype=2)+     ## Third-order polynomial fit. Blue envelop is 95% CI
+  #geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2),  formula = y ~ poly(x,2), color="red")+                               ## Second-order polynomial fit. Red envelop is 95% CI
+  scale_x_continuous(limits = c(-100, 50), expand = c(0, 0))+
+  scale_y_continuous(limits = c(0.510, 0.530),expand = c(0, 0), labels = scales::number_format(accuracy = .001))+
+  theme(text = element_text(size=16))+
+  labs(y=expression(lambda[lake]), x=expression(Delta*"\u02B9"^"17"*"O (per meg; "*lambda[ref]*" = 0.528)"))
+
+p5
+
+
+## Compile p3 and p5
+compiled = ggarrange(p3, p5, 
+          labels = c("A", "B"),
+          ncol = 1, nrow = 2)
+
+#ggsave(filename="compiled plots", plot = compiled, path=plot.path, device=cairo_pdf, height=10, width=5 )
+
+#################################################################
+#####  8) Calculate modeled lam.lake - D'17Ow relationship  #####
+#################################################################
+
+## Using a third order polynomial <-- preferred
+model.poly3 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2) + I(Dp17Ow.eq2^3)))
+#summary(model.poly3)
+
+## Using a second order polynomial <-- poorer fit than a third order polynomial
+model.poly2 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2)))
+
+
+##############################################################################
+#####  9) 3D plot illustrating modeled D'17Ow as a function of Xe and h  #####
+##############################################################################
+#### ** Creates plots that are the basis for Figure 8 in text
+#### Requires packages 'rgl' and 'viridisLite'
+
+df = data.frame(cbind(TF, Xe, h, Fr, D17Ov, d18Ov, lam.lake.eq2, dp18Ow.eq2, dp17Ow.eq2, Dp17Ow.eq2))   ## creates a dataframe of model outputs
+df = df[order(df$Xe),]                                                                                  ## orders dataframe from low to high Xe
+plot3d(df$h, df$Xe, df$Dp17Ow.eq2, 
+       col = turbo(unique(z)), size=10,
+       xlab = "h", ylab="Xe", zlab=expression(""*Delta*"\u02B9"^"17"*"O")) 
+
+#write.csv(df, file="df lake equation.csv")     # save model data as a .csv file
