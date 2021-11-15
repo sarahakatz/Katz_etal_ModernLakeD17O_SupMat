@@ -1,4 +1,4 @@
-# Katz_etal_ModernLakeD17O_SI
+# Katz_etal_ModernLakeD17O_SupMat
 # Supplemental code for “Using lake carbonate D'17O and D47 for reconstructing precipitation d18O in humid systems” by Sarah A. Katz, Naomi E. Levin, Donald T. Rodbell, David P. Gillikin, Phoebe G. Aron, and Benjamin H. Passey
 
 
