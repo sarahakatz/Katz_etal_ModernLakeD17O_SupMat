@@ -1,6 +1,6 @@
 ### Title: Using lake carbonate D'17O and D47 for reconstructing precipitation d18O in humid systems
 ### Supplementary script: lake.bal.supplement.R
-### Code Author: Sarah Katz
+### Author: Sarah Katz
 ### Contact: Sarah Katz (skatzees@umich.edu) or Naomi Levin (nelevin@umich.edu) with questions or comments
 
 #########################################################
@@ -54,27 +54,6 @@ library(viridisLite)
 
 plot.path <- "~/Desktop/"             ## user may update plot path
 
-## Sample data from this study and from Passey and Ji (2019). (Included here so that the user does not have to read in data files for plots 1 and 3)
-## Creates a dataframe of water data reported in the text from the Junin and Yanacocha catchments (excludes data from the isolated pool)
-    Katz_samples_waters = c("PE19-CAR-S028", "PE19-JUN-R063", "PE16-JUN-L016", "PE19-JUN-L090", "PE19-JUN-L159", "PE16-JUN-S038", "PE16-JUN-S048", "PE16-JUN-S053", "PE16-JUN-S019", "PE19-YAN-L141", "PE19-YAN-L155", "PE19-YAN-S140", "PE19-MEH-L116", "PE19-PUM-L018", "PE19-PUM-S016")
-    Katz_D17O_pm = c(24, 14, -6, 25, 16, 19, 19, 9, 25, 25, 10, 1, 27, 36, 23)                                                                              ## Table 2
-    Katz_dp18O = c(-14.903, -10.346, -4.159, -12.326, -11.077, -14.277, -12.896, -12.681, -14.146, -11.780, -9.673, -8.951, -13.289, -13.067, -14.435)      ## Table 2
-    Katz_samples_carbfw = c("PE19-PUM-C007", "PE19-PUM-C008", "PE19-PUM-C021", "PE19-PUM-C133A", "PE19-MEH-C117", "PE19-MEH-C122", "PE19-YAN-C156", "PE19-YAN-C158", "PE19-YAN-C145A", "PE19-JUN-C163", "PE19-JUN-C094")
-    Katz_D17O_pm_carbfw = c(25, 20, 15, 18, 11, 17, 1, 2, 7, 9, 28)                                                                                         ## Table 9
-    Katz_dp18O_carbfw = c(-13.963, -13.288, -13.931, -12.177, -13.663, -12.817, -9.854, -12.828, -12.811, -12.506, -15.103)                                 ## Table 9
-    
-    # Katz_samples_carb = c("PE19-JUN-C163", "PE19-MEH-C117", "PE19-PUM-C007", "PE19-YAN-C156", "PE19-YAN-C158", "PE19-JUN-C094", "PE19-PUM-C008", "PE19-MEH-C122", "PE19-YAN-C145A", "PE19-PUM-C021", "PE19-PUM-C133A")
-    # Katz_D17O_pm_carb = c(14, 20, 34, 10, 10, 41, 30, 25, 15, 24, 26)
-    # Katz_dp18O_carb = c(-12.392, -13.661, -13.965, -9.837, -12.835, -15.743, -13.510, -12.840, -12.844, -13.970, -12.214)
-## Creates a dataframe of lake water data reported in Passey and Ji (2019)
-    PJ19_samples_waters = c("2014PL001-W1", "2014PL002-W1", "2014PL004-W1", "2014MonoL-W1", "2014MonoL-002W1", "2014BL-005W", "2014BL-008W", "2014BL-009W", "2014GSL-001W2", "2014GSL-002W", "2014GSL-003W", "2014GSL-JRW")
-    PJ19_D17O_pm = c(-34,-39,-38,-31,-26,8,7,19,-28,-12,-17,-20)
-    PJ19_dp18O = c(-0.895,-0.429,-0.343,-3.851,-5.532,-9.968,-9.948,-9.345,-4.206,-6.325,-4.347,-4.545)
-    PJ19_samples_carbfw = c("2014PL-001C", "2014PL-002C", "2014MonoL-001C", "2014BL-005C", "2014BL-005Shell", "2014BL-008C", "2014GSL-001C", "2014GSL-JRC")
-    PJ19_D17O_pm_carbfw = c(-26, -32, -91, -31, -23, -14, -28, -29)
-    PJ19_dp18O_carbfw = c(-1.2, -0.8, 5.9, -5.8, -4.2, -5.5, -3.0, -3.3)
-
-
 #########################################################
 ##############  2) EQUATIONS  ###########################
 #########################################################
@@ -85,7 +64,7 @@ plot.path <- "~/Desktop/"             ## user may update plot path
 
 ## Eq. 2
 ## Rw = (aeq*Ri*(adiff(a-h) + h*(1-F)) + aeq*h*Xe*Rv*F) / (Xe + aeq*(1-Xe)*(adiff*(1-h) + h(1-F))
-## Throughflow lake where evaporated water contributes to atmospheric vapor (Passey and Ji, 2019, Eq. 6)
+## Throughflow lake where evaporated water contributes to atmospheric vapor (Benson and White, 1994; Passey and Ji, 2019, Eq. 6)
 
 
 #########################################################
@@ -161,15 +140,15 @@ Ri2H = ((d2Hi/1000)+1)*R2smow
 
 ################## Isotopic ratio of water vapor in equilibrium with lake water  ##################
 
-d18Ov = runif(z, min = -17, max = -13)            ## random selection between min an max values for atmospheric vapor d18O value
-D17Ov = runif(z, min = 0.015, max = 0.040)        ## random selection between min an max values for atmospheric vapor D'17O value
-dxsv = runif(z, min = 0, max = 30)                ## random selection between min an max values for atmospheric vapor d-excess value
+d18Ov = runif(z, min = dp18Oi-2, max = dp18Oi+2)  ## random selection between min and max values for atmospheric vapor d18O value
+D17Ov = runif(z, min = 0.015, max = 0.040)        ## random selection between min and max values for atmospheric vapor D'17O value
+dxsv = runif(z, min = 0, max = 30)                ## random selection between min and max values for atmospheric vapor d-excess value
 
-dp18Ov = log(d18Ov/1000+1)*1000                   ## convert vapor d18O to delta prime
-dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d'17O 
+dp18Ov = log(d18Ov/1000+1)*1000                   ## convert vapor d18O to d'18O
+dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d17O to d'17O
 d2Hv = dxsv + 8*d18Ov                             ## calculate vapor d2H
 
-## Temperature dependent equilibrium fractionation between vapor and liquid water
+## Temperature dependent equilibrium fractionation factor between vapor and liquid water
 aeq18 = exp((1137/((temp + 273.15)^2)) - (0.4146/(temp+273.15)) - 0.0020667)    ## Majoube 1971
 aeq17 = exp(theta.eq * log(aeq18))                                              
 aeq2H = exp((24844/((temp + 273.15)^2)) - (76.248/(temp+273.15)) + 0.052612)    ## Majoube 1971
@@ -244,10 +223,6 @@ p1 <- ggplot()+
   theme_bw()+
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
   geom_point(aes(x=dp18Ow.eq1, y = Dp17Ow.eq1), size =2, shape = 23, color="grey")+  
-  geom_point(aes(x=Katz_dp18O, y=Katz_D17O_pm), size =2, fill="skyblue3", shape =21, stroke = 0.5)+
-  geom_point(aes(x=Katz_dp18O_carbfw, y=Katz_D17O_pm_carbfw), size =2, fill="skyblue1", shape =22, stroke = 0.5)+
-  geom_point(aes(x=PJ19_dp18O, y=PJ19_D17O_pm), size =2, fill="gold", shape =21, stroke = 0.5)+
-  geom_point(aes(x=PJ19_dp18O_carbfw, y=PJ19_D17O_pm_carbfw), size =2, fill="gold3", shape =22, stroke = 0.5)+
   geom_point(aes(y=D17Oi*1000, x=dp18Oi), size =2, shape = 23, color = "black", stroke = 0.75, fill="white")+ 
   scale_x_continuous(limits = c(-20, 20), expand = c(0, 0))+
   scale_y_continuous(limits = c(-150, 50),expand = c(0, 0), labels = scales::number_format(accuracy = 1))+
@@ -275,10 +250,6 @@ p3 <- ggplot()+
   theme_bw()+
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
   geom_point(aes(x=dp18Ow.eq2, y = Dp17Ow.eq2), size =1.5, shape = 23, color="grey")+  
-  geom_point(aes(x=Katz_dp18O, y=Katz_D17O_pm), size =2, fill="skyblue3", shape =21, stroke = 0.5)+
-  geom_point(aes(x=Katz_dp18O_carbfw, y=Katz_D17O_pm_carbfw), size =2, fill="skyblue1", shape =22, stroke = 0.5)+
-  geom_point(aes(x=PJ19_dp18O, y=PJ19_D17O_pm), size =2, fill="gold", shape =21, stroke = 0.5)+
-  geom_point(aes(x=PJ19_dp18O_carbfw, y=PJ19_D17O_pm_carbfw), size =2, fill="gold3", shape =22, stroke = 0.5)+
   geom_point(aes(y=D17Oi*1000, x=dp18Oi), size =2, shape = 23, color = "black", stroke = 0.75, fill="white")+ 
   scale_x_continuous(limits = c(-20, 20), expand = c(0, 0))+
   scale_y_continuous(limits = c(-150, 50),expand = c(0, 0), labels = scales::number_format(accuracy = 1))+
@@ -304,13 +275,13 @@ p4
 p5 <- ggplot()+
   theme_bw()+
   theme(panel.grid.minor = element_blank(), panel.grid.major = element_blank())+
-  geom_point(aes(y=lam.lake.eq2, x = Dp17Ow.eq2), size =2, shape = 23, color="grey")+
-  geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2),  formula = y ~ poly(x,3), fill="blue", color="black", linetype=2)+     ## Third-order polynomial fit. Blue envelop is 95% CI
-  #geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2),  formula = y ~ poly(x,2), color="red")+                               ## Second-order polynomial fit. Red envelop is 95% CI
-  scale_x_continuous(limits = c(-100, 50), expand = c(0, 0))+
-  scale_y_continuous(limits = c(0.510, 0.530),expand = c(0, 0), labels = scales::number_format(accuracy = .001))+
+  geom_point(aes(y=lam.lake.eq2, x = Dp17Ow.eq2-D17Oi*1000), size =2, shape = 23, color="grey")+
+  geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2-D17Oi*1000),  formula = y ~ poly(x,3), fill="blue", color="black", linetype=2)+     ## Third-order polynomial fit. Blue envelop is 95% CI
+  #geom_smooth(method = 'lm', se=TRUE, aes(y=lam.lake.eq2, x = Dp17Ow.eq2-D17Oi*1000),  formula = y ~ poly(x,2), color="red")+                               ## Second-order polynomial fit. Red envelop is 95% CI
+  scale_x_continuous(limits = c(-150, 10), expand = c(0, 0))+
+  scale_y_continuous(limits = c(0.51, 0.53),expand = c(0, 0), labels = scales::number_format(accuracy = .001))+
   theme(text = element_text(size=16))+
-  labs(y=expression(lambda[lake]), x=expression(Delta*"\u02B9"^"17"*"O (per meg; "*lambda[ref]*" = 0.528)"))
+  labs(y=expression(lambda[lake]), x=expression(Delta*"\u02B9"^"17"*"O"[lake]*" - "*Delta*"\u02B9"^"17"*"O"[input]*" (per meg; "*lambda[ref]*" = 0.528)"))
 
 p5
 
