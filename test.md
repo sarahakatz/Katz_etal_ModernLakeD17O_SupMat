@@ -1,1 +1,1 @@
-{% 3dscatter.html %}
+{% include 3dscatter.html %}
