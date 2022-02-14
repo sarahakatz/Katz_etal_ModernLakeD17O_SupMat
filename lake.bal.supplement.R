@@ -20,13 +20,12 @@
 ###     either of the balance equations and includes calculations for d2H and d-excess. Though  modeled d-excess is not
 ###     discussed in this paper, our code may be useful for studies which combine lake water d-excess and D'17O data.
 ###
-###     This script also includes the code to generate Figures 6 and 7.
 
 
 ###     Contents:
 
 ###     0) Description of script
-###     1) Required packages & datasets from this study and Passey & Ji (2019)
+###     1) Required packages 
 ###     2) Lake budget steady state equations
 ###     3) Constants
 ###     4) User defined model parameters and random selection of parameter values
@@ -34,7 +33,6 @@
 ###     6) Steady state lake water calculations - Eq. 2
 ###     7) Plots of modeled lake waters and lambda_lake (used to create Fig. 6)
 ###     8) Calculate modeled lambda_lake - D'17Ow relationship
-###     9) 3D plots (Used to create Fig. 7)
 
 
 #########################################################
@@ -304,17 +302,3 @@ model.poly3 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2) + I(Dp17Ow.eq2^3))
 ## Using a second order polynomial <-- poorer fit than a third order polynomial
 model.poly2 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2)))
 
-
-##############################################################################
-#####  9) 3D plot illustrating modeled D'17Ow as a function of Xe and h  #####
-##############################################################################
-#### ** Creates plots that are the basis for Figure 8 in text
-#### Requires packages 'rgl' and 'viridisLite'
-
-df = data.frame(cbind(TF, Xe, h, Fr, D17Ov, d18Ov, lam.lake.eq2, dp18Ow.eq2, dp17Ow.eq2, Dp17Ow.eq2))   ## creates a dataframe of model outputs
-df = df[order(df$Xe),]                                                                                  ## orders dataframe from low to high Xe
-plot3d(df$h, df$Xe, df$Dp17Ow.eq2, 
-       col = turbo(unique(z)), size=10,
-       xlab = "h", ylab="Xe", zlab=expression(""*Delta*"\u02B9"^"17"*"O")) 
-
-#write.csv(df, file="df lake equation.csv")     # save model data as a .csv file
