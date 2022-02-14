@@ -1,5 +1,5 @@
 ### Title: Using lake carbonate D'17O and D47 for reconstructing precipitation d18O in humid systems
-### Supplementary script: Error propagation for d18O values of carbonate formation waters (d18Orfw) from carbonate d18Oc and D47 values
+### Supplementary Material 2: Error propagation for d18O values of carbonate formation waters (d18Orfw) from carbonate d18Oc and D47 values
 ### Author: Sarah Katz
 ### Contact: Sarah Katz (skatzees@umich.edu) or Naomi Levin (nelevin@umich.edu) with questions or comments
 
