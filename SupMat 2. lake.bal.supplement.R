@@ -1,5 +1,5 @@
-### Title: Using lake carbonate D'17O and D47 for reconstructing precipitation d18O in humid systems
-### Supplementary Material 2: lake.bal.supplement.R
+### Title: Detecting hydrologic distinctions among Andean lakes using clumped and triple oxygen isotopes
+### Supplementary script: lake.bal.supplement.R
 ### Author: Sarah Katz
 ### Contact: Sarah Katz (skatzees@umich.edu) or Naomi Levin (nelevin@umich.edu) with questions or comments
 
@@ -20,6 +20,7 @@
 ###     either of the balance equations and includes calculations for d2H and d-excess. Though  modeled d-excess is not
 ###     discussed in this paper, our code may be useful for studies which combine lake water d-excess and D'17O data.
 ###
+###     This script also includes the code to generate Figure 6.
 
 
 ###     Contents:
@@ -35,6 +36,7 @@
 ###     8) Calculate modeled lambda_lake - D'17Ow relationship
 
 
+
 #########################################################
 #############  1) Required Packages  ####################
 #########################################################
@@ -43,12 +45,12 @@
 #install.packages("ggplot2")
 #install.packages("ggpubr")
 #install.packages("rgl")
-#install.packages("viridisLite")
+
 
 library(ggplot2)
 library(ggpubr)
 library(rgl)
-library(viridisLite)
+
 
 plot.path <- "~/Desktop/"             ## user may update plot path
 
@@ -97,16 +99,16 @@ temp = 14       ## Temperature in degrees Celsius
 ########### RANDOMLY  DISTRIBUTED VARIABLES #############
                  ### Min & Max values ###
 
-## Proportion of turbulent fractionation. May range from 0-1
-TFmin = 0.2     ## MIN 
-TFmax = 0.7     ## MAX
+## Proportion of turbulent fractionation. May range from 0-1.
+Phimin = 0.2     ## MIN 
+Phimax = 0.7     ## MAX
 
 ## Proportion of Evaporative losses to Inputs. May range from 0 (no evap loss) to 1 (all loss from evap)
 Xemin = 0.01    ## MIN
 Xemax = 1.0     ## MAX
 
 ## Relative humidity normalized to lake surface temperature. May range from 0 (dry atmosphere) to 1 (saturated atmosphere)
-hmin = 0.3      ## MIN
+hmin = 0.7      ## MIN
 hmax = 0.9      ## MAX
 
 ## Fraction of local vapor derived from non-lake water sources. May range from 0 (the lake provides 100% of local moisture) to 1 (the lake provides 0% of local moisture)
@@ -116,7 +118,7 @@ Fmax = 1        ## MAX
 
 ########### Random selection of parameter values between provided min-max values #############
 
-TF = runif(z, min = TFmin, max = TFmax)
+Phi = runif(z, min = Phimin, max = Phimax)
 Xe = runif(z, min = Xemin, max = Xemax)
 h = runif(z, min = hmin, max = hmax)
 Fr = runif(z, min = Fmin, max = Fmax)
@@ -156,10 +158,10 @@ Rv18 = (exp(dp18Ov/1000)* R18smow)/aeq18
 Rv17 = (exp(dp17Ov/1000)*R17smow)/aeq17
 Rv2H = R2smow*((d2Hv/1000)+1)
 
-## Diffusion vs. pure turbulence (i.e. no fractionation). When TF = 1, all diffusive fractionation; when TF = 0, no diffusive fractionation (all turbulent)
-adiff18 = TF*diffratio18 + (1-TF)
+## Diffusion vs. pure turbulence (i.e. no fractionation). When Phi = 1, all diffusive fractionation; when Phi = 0, no diffusive fractionation (all turbulent)
+adiff18 = Phi*diffratio18 + (1-Phi)
 adiff17 = exp(theta.diff*log(adiff18))
-adiff2H = TF*diffratio2H + (1-TF)  
+adiff2H = Phi*diffratio2H + (1-Phi)  
 
 
 #############################################################################################
@@ -288,7 +290,7 @@ p5
 compiled = ggarrange(p3, p5, 
           labels = c("A", "B"),
           ncol = 1, nrow = 2)
-
+compiled
 #ggsave(filename="compiled plots", plot = compiled, path=plot.path, device=cairo_pdf, height=10, width=5 )
 
 #################################################################
@@ -296,9 +298,10 @@ compiled = ggarrange(p3, p5,
 #################################################################
 
 ## Using a third order polynomial <-- preferred
-model.poly3 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2) + I(Dp17Ow.eq2^3)))
+Dp17Ow.eq2.permil=Dp17Ow.eq2/1000
+model.poly3 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2.permil + I(Dp17Ow.eq2.permil^2) + I(Dp17Ow.eq2.permil^3)))
 #summary(model.poly3)
 
 ## Using a second order polynomial <-- poorer fit than a third order polynomial
-model.poly2 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2 + I(Dp17Ow.eq2^2)))
+model.poly2 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2.permil + I(Dp17Ow.eq2.permil^2)))
 
