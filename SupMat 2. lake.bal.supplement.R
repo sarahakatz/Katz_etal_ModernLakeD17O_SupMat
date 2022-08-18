@@ -86,7 +86,6 @@ diffratio18 = 1/0.9723  ## Merlivat, 1978
 diffratio2H = 1/0.9755  ## Merlivat, 1978
                 ## adiff18 = 1.025115
 
-
 #########################################################
 ##############  4) USER DEFINED  ########################
 #########################################################
@@ -108,7 +107,7 @@ Xemin = 0.01    ## MIN
 Xemax = 1.0     ## MAX
 
 ## Relative humidity normalized to lake surface temperature. May range from 0 (dry atmosphere) to 1 (saturated atmosphere)
-hmin = 0.7      ## MIN
+hmin = 0.3      ## MIN
 hmax = 0.9      ## MAX
 
 ## Fraction of local vapor derived from non-lake water sources. May range from 0 (the lake provides 100% of local moisture) to 1 (the lake provides 0% of local moisture)
@@ -145,18 +144,18 @@ D17Ov = runif(z, min = 0.015, max = 0.040)        ## random selection between mi
 dxsv = runif(z, min = 0, max = 30)                ## random selection between min and max values for atmospheric vapor d-excess value
 
 dp18Ov = log(d18Ov/1000+1)*1000                   ## convert vapor d18O to d'18O
-dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d17O to d'17O
+dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d'17O
 d2Hv = dxsv + 8*d18Ov                             ## calculate vapor d2H
 
 ## Temperature dependent equilibrium fractionation factor between vapor and liquid water
-aeq18 = exp((1137/((temp + 273.15)^2)) - (0.4146/(temp+273.15)) - 0.0020667)    ## Majoube 1971
+aeq18 = exp((1137/((temp + 273.15)^2)) - (0.4156/(temp+273.15)) - 0.0020667)    ## Majoube 1971
 aeq17 = exp(theta.eq * log(aeq18))                                              
 aeq2H = exp((24844/((temp + 273.15)^2)) - (76.248/(temp+273.15)) + 0.052612)    ## Majoube 1971
 
 ## Calculate R values for vapor
 Rv18 = (exp(dp18Ov/1000)* R18smow)/aeq18
 Rv17 = (exp(dp17Ov/1000)*R17smow)/aeq17
-Rv2H = R2smow*((d2Hv/1000)+1)
+Rv2H = (R2smow*((d2Hv/1000)+1))/aeq2H    ## 5/18/2022 added missing "/aeq2H" (SK)
 
 ## Diffusion vs. pure turbulence (i.e. no fractionation). When Phi = 1, all diffusive fractionation; when Phi = 0, no diffusive fractionation (all turbulent)
 adiff18 = Phi*diffratio18 + (1-Phi)
@@ -179,11 +178,14 @@ dp18Ow.eq1 = (log(Rw18.eq1/R18smow))*1000
 d18Ow.eq1 = ((Rw18.eq1/R18smow)-1)*1000
 dp17Ow.eq1 = (log(Rw17.eq1/R17smow))*1000
 d2Hw.eq1 = ((Rw2H.eq1/R2smow)-1)*1000
+dp2Hw.eq1 = (log(Rw2H.eq1/R2smow))*1000
 
 Dp17Ow.eq1 = (dp17Ow.eq1 - (theta.ref*dp18Ow.eq1))*1000
 dxsw.eq1 = d2Hw.eq1 - gmwl[1]*d18Ow.eq1
+dpxs.eq1= dp2Hw.eq1 - gmwl[1]*dp18Ow.eq1
 
 lam.lake.eq1 = (dp17Ow.eq1-dp17Oi)/(dp18Ow.eq1-dp18Oi)
+EL.eq1 = (d2Hw.eq1- (log(d2Hi/1000+1)*1000) )/(dp18Ow.eq1-dp18Oi)
 
 #############################################################################################
 #######################  6) LAKE WATER CALCULATIONS - EQ. 2  ################################
@@ -304,4 +306,6 @@ model.poly3 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2.permil + I(Dp17Ow.eq2.permil^2) + I(
 
 ## Using a second order polynomial <-- poorer fit than a third order polynomial
 model.poly2 = lm(lam.lake.eq2 ~ (Dp17Ow.eq2.permil + I(Dp17Ow.eq2.permil^2)))
+
+
 
