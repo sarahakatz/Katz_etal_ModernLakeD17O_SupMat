@@ -137,15 +137,15 @@ Ri18 = exp(dp18Oi/1000)*R18smow
 Ri17 = exp(dp17Oi/1000)*R17smow
 Ri2H = ((d2Hi/1000)+1)*R2smow
 
-################## Isotopic ratio of water vapor in equilibrium with lake water  ##################
+################## Isotopic ratio of water vapor in equilibrium with regional water  ##################
 
-d18Ov = runif(z, min = dp18Oi-2, max = dp18Oi+2)  ## random selection between min and max values for atmospheric vapor d18O value
-D17Ov = runif(z, min = 0.015, max = 0.040)        ## random selection between min and max values for atmospheric vapor D'17O value
-dxsv = runif(z, min = 0, max = 30)                ## random selection between min and max values for atmospheric vapor d-excess value
+d18Owv = runif(z, min = dp18Oi-2, max = dp18Oi+2)  ## random selection between min and max values for liquid water that atmospheric vapor is in equilibrium with. Water isotopic composition based on amount-weighted mean annual precipitation. 
+D17Owv = runif(z, min = 0.015, max = 0.040)        ## random selection between min and max values for liquid water that atmospheric vapor is in equilibrium with. Water isotopic composition based on amount-weighted mean annual precipitation.
+dxswv = runif(z, min = 0, max = 30)                ## random selection between min and max values for liquid water that atmospheric vapor is in equilibrium with. Water isotopic composition based on amount-weighted mean annual precipitation.
 
-dp18Ov = log(d18Ov/1000+1)*1000                   ## convert vapor d18O to d'18O
-dp17Ov = D17Ov + theta.ref*dp18Ov                 ## calculate vapor d'17O
-d2Hv = dxsv + 8*d18Ov                             ## calculate vapor d2H
+dp18Owv = log(d18Owv/1000+1)*1000                   ## convert liquid water that atmospheric vapor is in equilibrium with d18O to d'18O
+dp17Owv = D17Ov + theta.ref*dp18Owv                 ## calculate liquid water that atmospheric vapor is in equilibrium with d'17O
+d2Hwv = dxswv + 8*d18Owv                            ## calculate liquid water that atmospheric vapor is in equilibrium with d2H
 
 ## Temperature dependent equilibrium fractionation factor between vapor and liquid water
 aeq18 = exp((1137/((temp + 273.15)^2)) - (0.4156/(temp+273.15)) - 0.0020667)    ## Majoube 1971
@@ -153,9 +153,18 @@ aeq17 = exp(theta.eq * log(aeq18))
 aeq2H = exp((24844/((temp + 273.15)^2)) - (76.248/(temp+273.15)) + 0.052612)    ## Majoube 1971
 
 ## Calculate R values for vapor
-Rv18 = (exp(dp18Ov/1000)* R18smow)/aeq18
-Rv17 = (exp(dp17Ov/1000)*R17smow)/aeq17
-Rv2H = (R2smow*((d2Hv/1000)+1))/aeq2H    ## 5/18/2022 added missing "/aeq2H" (SK)
+Rv18 = (exp(dp18Owv/1000)* R18smow)/aeq18
+Rv17 = (exp(dp17Owv/1000)*R17smow)/aeq17
+Rv2H = (R2smow*((d2Hwv/1000)+1))/aeq2H    ## 5/18/2022 added missing "/aeq2H" (SK)
+
+## Isotopic composition of regional vapor
+dp18Ovapor = log(Rv18/R18smow)*1000                 ## atmospheric water vapor d'18O
+dp17Ovapor = log(Rv17/R17smow)*1000                 ## atmospheric water vapor d'17O
+Dp17Ovapor = (dp17Ovapor - (0.528*dp18Ovapor))      ## atmospheric water vapor D'17O. in per mil
+
+d18Ovapor = (Rv18/R18smow - 1)*1000                 ## atmospheric water vapor d18O
+d2Hvapor = (Rv2H/R2smow - 1)*1000                   ## atmospheric water vapor d2H
+dxsvapor = d2Hvapor - 8*d18Ovapor                   ## atmospheric water vapor d-excess
 
 ## Diffusion vs. pure turbulence (i.e. no fractionation). When Phi = 1, all diffusive fractionation; when Phi = 0, no diffusive fractionation (all turbulent)
 adiff18 = Phi*diffratio18 + (1-Phi)
