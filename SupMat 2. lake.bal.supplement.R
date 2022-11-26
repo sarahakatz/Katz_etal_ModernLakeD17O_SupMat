@@ -124,7 +124,7 @@ Fr = runif(z, min = Fmin, max = Fmax)
 
 
 ##################  User-assigned values for input water  #######################
-## Based on amount-weighted mean annual precipitation at Junin, Peru (Katz et al., Section 5.2.1.1). All in units of per mil.
+## Based on amount-weighted mean annual precipitation at Junin, Peru (Katz et al., Section 5.2.1). All in units of per mil.
 D17Oi = 0.031
 dp18Oi = -14.1
 dp17Oi = D17Oi + (dp18Oi * theta.ref)  
@@ -155,7 +155,7 @@ aeq2H = exp((24844/((temp + 273.15)^2)) - (76.248/(temp+273.15)) + 0.052612)    
 ## Calculate R values for vapor
 Rv18 = (exp(dp18Owv/1000)* R18smow)/aeq18
 Rv17 = (exp(dp17Owv/1000)*R17smow)/aeq17
-Rv2H = (R2smow*((d2Hwv/1000)+1))/aeq2H    ## 5/18/2022 added missing "/aeq2H" (SK)
+Rv2H = (R2smow*((d2Hwv/1000)+1))/aeq2H    
 
 ## Isotopic composition of regional vapor
 dp18Ovapor = log(Rv18/R18smow)*1000                 ## atmospheric water vapor d'18O
